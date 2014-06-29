@@ -2,27 +2,25 @@
 
 import sys
 import logging
+import configparser
+
 from collections import namedtuple
 from datetime import datetime
 
 #DEBUG
 from pprint import pprint as P
 
-try:
-    #Python 2.x
-    import ConfigParser as configparser
-except:
-    #Python 3.x
-    import configparser
 
 import pygame
 from pygame.locals import *
+
 
 CONFIG_FILE = './.config'
 
 logger = logging.getLogger('main_logger')
 
-#TODO: There's no ExtendedInterpolation in config parser.
+#TODO:
+    #There's no ExtendedInterpolation in config parser.
     #Maybe have to do some config preprocessing if only python 2.x found?!
 
 try:
@@ -49,6 +47,26 @@ DEBUG = config.getboolean("application", "debug")
 if DEBUG:
     logger.setLevel(logging.DEBUG)
 
+
+def check_constraints(func):
+    def wrapper(*args, **kwargs):
+        res = func()
+        return res
+    return wrapper
+
+class Snake(object):
+    def __init__(self, start_grid_x, start_grid_y):
+        self._x = start_grid_x
+        self._y = start_grid_y
+
+    def _move_segment_up(self):
+        pass
+    def _move_segment_down(self):
+        pass
+    def _move_segment_left(self):
+        pass
+    def _move_segment_right(self):
+        pass
 
 class _Field(object):
     """Field """
@@ -83,12 +101,12 @@ class _Field(object):
         #REFACTOR:
         offset_ext = self._border_ext + 2*self._border_int + self._cell_w
 
-        self._d = {(x, self._start_y): (x, self._end_y) for x in range(self._start_x, self._end_x, offset_ext)}
-        self._d.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, offset_ext)}) 
+        self._borders_ext = {(x, self._start_y): (x, self._end_y) for x in range(self._start_x, self._end_x, offset_ext)}
+        self._borders_ext.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, offset_ext)}) 
         
     def draw(self, surface):
         
-        for start_point, end_point in self._d.items():
+        for start_point, end_point in self._borders_ext.items():
             pygame.draw.line(surface, self._border_ext_color,
                              start_point, end_point,
                              self._border_ext)
