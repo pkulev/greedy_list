@@ -48,6 +48,10 @@ if DEBUG:
     logger.setLevel(logging.DEBUG)
 
 
+Point = namedtuple("Point", ["x", "y"])
+Line = namedtuple("Line", ["start", "end"])
+
+
 def check_constraints(func):
     def wrapper(*args, **kwargs):
         res = func()
@@ -70,52 +74,54 @@ class Snake(object):
 
 class _Field(object):
     """Field """
-    def __init__(self, start_x, start_y, end_x, end_y, config):
-        self._start_x = start_x
-        self._start_y = start_y
-        self._end_x = end_x
-        self._end_y = end_y
+    def __init__(self, start_pos, end_pos, config):
+        self._start_pos = start_pos
+        self._end_pos = end_pos
 
         self._snake = None
         
         #Style
         self._cube_size = config.getint("field", "cube_size")
         self._cell_size = config.getint("field", "cell_size")
-        self._matrix_size = config.getint("field", "cell_size")
-        self._border_ext = config.getint("field", "border_ext")
-        self._border_int = config.getint("field", "border_int")
+        self._mat_size = int(min(self._end_pos.x, self._end_pos.y) / self._cell_size) 
+        self._line_size = self._cell_size - self._cube_size
 
+        
         #Color
         header = namedtuple("t", ["section", "var"])
-        get_color = lambda t: pygame.Color(*[int(c) for c in config.get(t.section, t.var).split(',')]) 
+        get_color = lambda t: pygame.Color(*[int(c)
+                                            for c in config.get(t.section, 
+                                                                t.var).split(',')]) 
         
         self._head_color = get_color(header("field", "head_color"))
         self._tail_color = get_color(header("field", "tail_color"))
-        self._border_ext_color = get_color(header("field", "border_ext_color"))
-        self._border_int_color = get_color(header("field", "border_int_color"))
+        self._line_color = get_color(header("field", "line_color"))
         del header
         del get_color
-
-        offset = self._cell_size
 
         #TODO:
             #Dynamic recalculating grid based on surface's size
             #Dynamic creating grid, rereading config on the fly
-        #REFACTOR:
-        offset_ext = self._cell_size #self._border_ext + 2*self._border_int + self._box_size
 
-        self._borders_ext = {(x, self._start_y): (x, self._end_y) for x in range(self._start_x, self._end_x, offset_ext)}
-        self._borders_ext.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, offset_ext)}) 
+
+        #REFACTOR:
         
+        line = [Line(Point(x, y), ) for start in  ]
+        self._grid = {Point(x, self._start_pos.y): Point(x, self._end_pos.y) 
+                for x in range(self._start_pos.x, self._end_pos.x, self._cell_size)}
+
+
+        self._grid.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, self._cell_size)}) 
+
+        P(self._grid)    
+
     def draw(self, surface):
-        
-        for start_point, end_point in self._borders_ext.items():
-            pygame.draw.line(surface, self._border_ext_color,
+        for start_point, end_point in self._grid.items():
+            pygame.draw.line(surface, self._line_color,
                              start_point, end_point,
-                             self._border_ext)
-    #WHY?
-    pygame.draw.line(surface, self._border_ext_color, (0,0), (0, 800), 3)
-            
+                             self._line_size)
+        
+
 class App(object):
     """Main application class"""
     
@@ -130,7 +136,7 @@ class App(object):
         self._window = pygame.display.set_mode((self._width, self._height))
         pygame.display.set_caption(config.get("window", "caption"))
 
-        self._field = _Field(0, 0, self._width, self._height, config)
+        self._field = _Field(Point(0, 0), Point(self._width, self._height), config)
 
     def _handle_events(self):
         for event in pygame.event.get():
@@ -153,13 +159,13 @@ class App(object):
         self._fpsClock.tick(self._FPS)
         
 
-    def exec_(self):
+    def start(self):
         while True:
             self._handle_events()
             self._update()
             self._render()
-        return 0
+
 
 if __name__ == "__main__":
     app = App(config)
-    sys.exit(app.exec_())
+    sys.exit(app.start())
