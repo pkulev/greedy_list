@@ -76,9 +76,12 @@ class _Field(object):
         self._end_x = end_x
         self._end_y = end_y
 
+        self._snake = None
+        
         #Style
-        self._cell_w = config.getint("field", "cell_w")
-        self._cell_h = config.getint("field", "cell_h")
+        self._cube_size = config.getint("field", "cube_size")
+        self._cell_size = config.getint("field", "cell_size")
+        self._matrix_size = config.getint("field", "cell_size")
         self._border_ext = config.getint("field", "border_ext")
         self._border_int = config.getint("field", "border_int")
 
@@ -93,13 +96,13 @@ class _Field(object):
         del header
         del get_color
 
-        offset = self._border_ext + 2*self._border_int + self._cell_w
+        offset = self._cell_size
 
         #TODO:
             #Dynamic recalculating grid based on surface's size
             #Dynamic creating grid, rereading config on the fly
         #REFACTOR:
-        offset_ext = self._border_ext + 2*self._border_int + self._cell_w
+        offset_ext = self._cell_size #self._border_ext + 2*self._border_int + self._box_size
 
         self._borders_ext = {(x, self._start_y): (x, self._end_y) for x in range(self._start_x, self._end_x, offset_ext)}
         self._borders_ext.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, offset_ext)}) 
@@ -110,7 +113,9 @@ class _Field(object):
             pygame.draw.line(surface, self._border_ext_color,
                              start_point, end_point,
                              self._border_ext)
-
+    #WHY?
+    pygame.draw.line(surface, self._border_ext_color, (0,0), (0, 800), 3)
+            
 class App(object):
     """Main application class"""
     
