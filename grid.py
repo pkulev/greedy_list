@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
+import random
 import logging
 import configparser
 
@@ -49,28 +50,12 @@ if DEBUG:
 
 
 Point = namedtuple("Point", ["x", "y"])
+#start and end are Points
 Line = namedtuple("Line", ["start", "end"])
 
 
-def check_constraints(func):
-    def wrapper(*args, **kwargs):
-        res = func()
-        return res
-    return wrapper
-
-class Snake(object):
-    def __init__(self, start_grid_x, start_grid_y):
-        self._x = start_grid_x
-        self._y = start_grid_y
-
-    def _move_segment_up(self):
-        pass
-    def _move_segment_down(self):
-        pass
-    def _move_segment_left(self):
-        pass
-    def _move_segment_right(self):
-        pass
+class Snake(list):
+    pass
 
 class _Field(object):
     """Field """
@@ -78,15 +63,22 @@ class _Field(object):
         self._start_pos = start_pos
         self._end_pos = end_pos
 
-        self._snake = None
-        
         #Style
         self._cube_size = config.getint("field", "cube_size")
         self._cell_size = config.getint("field", "cell_size")
-        self._mat_size = int(min(self._end_pos.x, self._end_pos.y) / self._cell_size) 
-        self._line_size = self._cell_size - self._cube_size
-
+        self._line_size = config.getint("field", "line_size")
         
+        self._item = self._cell_size + 2 * self._line_size
+        
+        #TEMP:
+        self._max_matrix_x = self._end_pos.x // self._item
+        self._max_matrix_y = self._end_pos.y // self._item
+        
+        self._grid_rtop = Point(self._end_pos.x - self._end_pos.x % self._item,
+                                self._end_pos.y - self._end_pos.y % self._item)
+
+        self._surface = None
+     
         #Color
         header = namedtuple("t", ["section", "var"])
         get_color = lambda t: pygame.Color(*[int(c)
@@ -103,20 +95,44 @@ class _Field(object):
             #Dynamic recalculating grid based on surface's size
             #Dynamic creating grid, rereading config on the fly
 
+        #self._grid_f = self._greed_to_pixels() #dictionary { (grid_x, grid_y) : (left, top) }
+    
+        #TEMP:
+        self._grid_px = self._generate_surface()
 
-        #REFACTOR:
+
+    def _generate_surface(self):
+        grid_px = []
         
-        line = [Line(Point(x, y), ) for start in  ]
-        self._grid = {Point(x, self._start_pos.y): Point(x, self._end_pos.y) 
-                for x in range(self._start_pos.x, self._end_pos.x, self._cell_size)}
+        for i in range(self._start_pos.x, self._grid_rtop.x, self._cell_size):
+            grid_px.append(Line(Point(i, self._start_pos.y), 
+                                Point(i, self._grid_rtop.y)))
+        for i in range(self._start_pos.y, self._grid_rtop.y, self._cell_size):
+            grid_px.append(Line(Point(self._start_pos.x, i),
+                                Point(self._grid_rtop.x, i)))
+        return grid_px[:]
 
 
-        self._grid.update({(self._start_x, y): (self._end_x, y) for y in range(self._start_y, self._end_y, self._cell_size)}) 
-
-        P(self._grid)    
+    def _grid_to_pixels(point):
+        """
+        returns pygame rectangle coordinates in pixels
+        
+        Point(grid_x, grid_y) --> _grid_to_pixels --> (Point(x, y), width, height) 
+        """
+        pass
+    
+    
+    def _draw_rect(rect, r_type):
+        if r_type == 'head':
+            pygame.draw.rect(self._surface, self._head_color, *rect)
+        elif r_type == 'tail':
+            pygame.draw.rect(self._surface, self._tail_color, *rect)
+        elif r_type == 'food':
+            pygame.draw.rect(self._surface, self._food_color, *rect)
+        
 
     def draw(self, surface):
-        for start_point, end_point in self._grid.items():
+        for start_point, end_point in self._grid_px:
             pygame.draw.line(surface, self._line_color,
                              start_point, end_point,
                              self._line_size)
@@ -137,6 +153,12 @@ class App(object):
         pygame.display.set_caption(config.get("window", "caption"))
 
         self._field = _Field(Point(0, 0), Point(self._width, self._height), config)
+        #self._food = Point(
+
+        #TODO:
+        #field coordinate system
+        #snake's start position - center of field
+        #self._snake = [(self._field.x // 2, self._field.y // 2)] 
 
     def _handle_events(self):
         for event in pygame.event.get():
@@ -144,16 +166,21 @@ class App(object):
                                         event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit(0)
+
             else:
                 print(event)
 
     
     def _update(self):
+        #self._Field._update
         pass
 
 
     def _render(self):
         self._window.fill(pygame.Color(0, 0, 0, 1))
+        
+        #self._field_surface = self._field.get_surface()
+        
         self._field.draw(self._window)
         pygame.display.update()
         self._fpsClock.tick(self._FPS)
