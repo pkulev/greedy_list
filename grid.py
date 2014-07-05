@@ -50,12 +50,10 @@ if DEBUG:
 
 
 Point = namedtuple("Point", ["x", "y"])
-#start and end are Points
+#'start' and 'end' are Points
 Line = namedtuple("Line", ["start", "end"])
-
-
-class Snake(list):
-    pass
+#'direction' is a Point, 'coords' is a tuple of Points
+Snake = namedtulpe("Snake", ["direction"], ["coords"])
 
 class _Field(object):
     """Field """
