@@ -53,7 +53,7 @@ Point = namedtuple("Point", ["x", "y"])
 #'start' and 'end' are Points
 Line = namedtuple("Line", ["start", "end"])
 #'direction' is a Point, 'coords' is a tuple of Points
-Snake = namedtulpe("Snake", ["direction"], ["coords"])
+Snake = namedtuple("Snake", ["direction"], ["coords"])
 
 class _Field(object):
     """Field """
